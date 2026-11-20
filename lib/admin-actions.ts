@@ -17,13 +17,17 @@ export async function loginAction(formData: FormData): Promise<void> {
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     maxAge: COOKIE_MAX_AGE,
-    path: "/admin",
+    // Path "/" so /api/admin/* receives the cookie too. proxy.ts still only
+    // gates /admin pages, and the API routes check the cookie themselves.
+    path: "/",
   });
   redirect("/admin");
 }
 
 export async function logoutAction(): Promise<void> {
   const store = await cookies();
-  store.delete(ADMIN_COOKIE_NAME);
+  // Delete both the new path and the old "/admin" path from earlier sessions.
+  store.delete({ name: ADMIN_COOKIE_NAME, path: "/" });
+  store.delete({ name: ADMIN_COOKIE_NAME, path: "/admin" });
   redirect("/admin/login");
 }
